@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1100 720" font-family="Calibri, Arial, sans-serif">
+  <defs>
+    <!-- Soft shadow -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="2.5"/>
+      <feOffset dx="0" dy="2" result="off"/>
+      <feComponentTransfer><feFuncA type="linear" slope="0.25"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <!-- Arrow marker -->
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#1F3864"/>
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#C19A2E"/>
+    </marker>
+  </defs>
+
+  <!-- Title -->
+  <text x="550" y="40" text-anchor="middle" font-size="24" font-weight="bold" fill="#1F3864" font-family="Cambria, Georgia, serif">CI/CD-Pipeline · WeatherWise</text>
+  <text x="550" y="62" text-anchor="middle" font-size="13" fill="#666" font-style="italic">GitHub Actions · GHCR · Multi-Stage Docker Build</text>
+
+  <!-- ============================== -->
+  <!-- TRIGGER -->
+  <!-- ============================== -->
+  <g filter="url(#shadow)">
+    <rect x="60" y="100" width="180" height="80" rx="10" fill="#FFFFFF" stroke="#C19A2E" stroke-width="2.5"/>
+    <text x="150" y="125" text-anchor="middle" font-size="13" font-weight="bold" fill="#C19A2E">TRIGGER</text>
+    <text x="150" y="148" text-anchor="middle" font-size="11" fill="#333">git push → main</text>
+    <text x="150" y="164" text-anchor="middle" font-size="11" fill="#333">pull_request · manual</text>
+  </g>
+
+  <!-- Arrow trigger → GitHub Actions -->
+  <line x1="240" y1="140" x2="305" y2="140" stroke="#1F3864" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- GITHUB ACTIONS box -->
+  <g filter="url(#shadow)">
+    <rect x="305" y="100" width="735" height="500" rx="14" fill="#F8F9FB" stroke="#1F3864" stroke-width="2.5"/>
+    <rect x="305" y="100" width="735" height="34" rx="14" fill="#1F3864"/>
+    <text x="672" y="123" text-anchor="middle" font-size="14" font-weight="bold" fill="#FFFFFF">GitHub Actions Runner (ubuntu-latest)</text>
+  </g>
+
+  <!-- ============================== -->
+  <!-- STAGE 1: LINT -->
+  <!-- ============================== -->
+  <g filter="url(#shadow)">
+    <rect x="335" y="160" width="200" height="120" rx="8" fill="#E8F0FE" stroke="#1565C0" stroke-width="2"/>
+    <rect x="335" y="160" width="6" height="120" fill="#1565C0"/>
+    <text x="435" y="185" text-anchor="middle" font-size="13" font-weight="bold" fill="#1565C0">Stage 1 · Lint</text>
+    <line x1="350" y1="195" x2="520" y2="195" stroke="#1565C0" stroke-width="0.5" opacity="0.4"/>
+    <text x="350" y="215" font-size="10.5" fill="#333">• checkout@v4</text>
+    <text x="350" y="232" font-size="10.5" fill="#333">• setup-node@v4 (Node 22)</text>
+    <text x="350" y="249" font-size="10.5" fill="#333">• npm-Cache aktiv</text>
+    <text x="350" y="266" font-size="10.5" fill="#333">• npm ci → npm run lint</text>
+  </g>
+
+  <!-- ============================== -->
+  <!-- STAGE 2: TEST (Matrix) -->
+  <!-- ============================== -->
+  <g filter="url(#shadow)">
+    <rect x="565" y="160" width="200" height="120" rx="8" fill="#E8F5E9" stroke="#2E7D32" stroke-width="2"/>
+    <rect x="565" y="160" width="6" height="120" fill="#2E7D32"/>
+    <text x="665" y="185" text-anchor="middle" font-size="13" font-weight="bold" fill="#2E7D32">Stage 2 · Test</text>
+    <line x1="580" y1="195" x2="750" y2="195" stroke="#2E7D32" stroke-width="0.5" opacity="0.4"/>
+    <text x="580" y="215" font-size="10.5" fill="#333">• Matrix: Node 20 · 22</text>
+    <text x="580" y="232" font-size="10.5" fill="#333">• Parallel-Ausführung</text>
+    <text x="580" y="249" font-size="10.5" fill="#333">• vitest run</text>
+    <text x="580" y="266" font-size="10.5" fill="#333">• 7 Unit-Tests</text>
+  </g>
+
+  <!-- LINT and TEST run in parallel - indicated by braces -->
+  <text x="450" y="298" text-anchor="middle" font-size="10" font-style="italic" fill="#666">parallel</text>
+  <text x="665" y="298" text-anchor="middle" font-size="10" font-style="italic" fill="#666">parallel</text>
+
+  <!-- Merge arrows down to BUILD -->
+  <path d="M 435 280 Q 435 320 550 330" stroke="#1F3864" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+  <path d="M 665 280 Q 665 320 590 330" stroke="#1F3864" stroke-width="2" fill="none" marker-end="url(#arrow)"/>
+
+  <!-- needs: gate -->
+  <g>
+    <rect x="495" y="315" width="170" height="28" rx="14" fill="#FFFFFF" stroke="#C19A2E" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="580" y="333" text-anchor="middle" font-size="10.5" font-weight="bold" fill="#C19A2E">needs: [lint, test] · if success</text>
+  </g>
+
+  <!-- ============================== -->
+  <!-- STAGE 3: BUILD & PUSH -->
+  <!-- ============================== -->
+  <g filter="url(#shadow)">
+    <rect x="335" y="365" width="675" height="170" rx="8" fill="#FFF8E1" stroke="#C19A2E" stroke-width="2"/>
+    <rect x="335" y="365" width="6" height="170" fill="#C19A2E"/>
+    <text x="672" y="390" text-anchor="middle" font-size="13" font-weight="bold" fill="#C19A2E">Stage 3 · Build &amp; Push  (nur auf main)</text>
+    <line x1="350" y1="400" x2="1000" y2="400" stroke="#C19A2E" stroke-width="0.5" opacity="0.4"/>
+
+    <!-- 4 sub-steps -->
+    <g>
+      <rect x="355" y="415" width="150" height="100" rx="6" fill="#FFFFFF" stroke="#C19A2E" stroke-width="1"/>
+      <text x="430" y="435" text-anchor="middle" font-size="11" font-weight="bold" fill="#1F3864">1 · Buildx Setup</text>
+      <text x="430" y="455" text-anchor="middle" font-size="10" fill="#555">docker/setup-</text>
+      <text x="430" y="469" text-anchor="middle" font-size="10" fill="#555">buildx-action</text>
+      <text x="430" y="495" text-anchor="middle" font-size="9" fill="#888" font-style="italic">Multi-Platform Builder</text>
+    </g>
+
+    <g>
+      <rect x="520" y="415" width="150" height="100" rx="6" fill="#FFFFFF" stroke="#C19A2E" stroke-width="1"/>
+      <text x="595" y="435" text-anchor="middle" font-size="11" font-weight="bold" fill="#1F3864">2 · Login GHCR</text>
+      <text x="595" y="455" text-anchor="middle" font-size="10" fill="#555">docker/login-action</text>
+      <text x="595" y="475" text-anchor="middle" font-size="10" fill="#C62828" font-weight="bold">GITHUB_TOKEN</text>
+      <text x="595" y="495" text-anchor="middle" font-size="9" fill="#888" font-style="italic">built-in Secret</text>
+    </g>
+
+    <g>
+      <rect x="685" y="415" width="150" height="100" rx="6" fill="#FFFFFF" stroke="#C19A2E" stroke-width="1"/>
+      <text x="760" y="435" text-anchor="middle" font-size="11" font-weight="bold" fill="#1F3864">3 · Tags + Build</text>
+      <text x="760" y="455" text-anchor="middle" font-size="10" fill="#555">metadata-action</text>
+      <text x="760" y="470" text-anchor="middle" font-size="10" fill="#555">build-push-action</text>
+      <text x="760" y="490" text-anchor="middle" font-size="9.5" fill="#2E7D32" font-weight="bold">cache: type=gha</text>
+      <text x="760" y="503" text-anchor="middle" font-size="9" fill="#888" font-style="italic">Layer-Cache</text>
+    </g>
+
+    <g>
+      <rect x="850" y="415" width="150" height="100" rx="6" fill="#FFFFFF" stroke="#C19A2E" stroke-width="1"/>
+      <text x="925" y="435" text-anchor="middle" font-size="11" font-weight="bold" fill="#1F3864">4 · Push</text>
+      <text x="925" y="455" text-anchor="middle" font-size="10" fill="#555">→ ghcr.io</text>
+      <text x="925" y="475" text-anchor="middle" font-size="10" fill="#2E7D32" font-weight="bold">tag: latest</text>
+      <text x="925" y="492" text-anchor="middle" font-size="10" fill="#2E7D32" font-weight="bold">tag: sha-&lt;40&gt;</text>
+      <text x="925" y="508" text-anchor="middle" font-size="9" fill="#888" font-style="italic">zwei Tags</text>
+    </g>
+
+    <!-- arrows between sub-steps -->
+    <line x1="505" y1="465" x2="518" y2="465" stroke="#C19A2E" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+    <line x1="670" y1="465" x2="683" y2="465" stroke="#C19A2E" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+    <line x1="835" y1="465" x2="848" y2="465" stroke="#C19A2E" stroke-width="1.5" marker-end="url(#arrow-amber)"/>
+  </g>
+
+  <!-- Arrow to registry -->
+  <line x1="672" y1="535" x2="672" y2="585" stroke="#1F3864" stroke-width="2.5" marker-end="url(#arrow)"/>
+
+  <!-- ============================== -->
+  <!-- REGISTRY -->
+  <!-- ============================== -->
+  <g filter="url(#shadow)">
+    <rect x="475" y="600" width="400" height="90" rx="10" fill="#FFFFFF" stroke="#1F3864" stroke-width="2.5"/>
+    <text x="675" y="628" text-anchor="middle" font-size="14" font-weight="bold" fill="#1F3864">GitHub Container Registry (GHCR)</text>
+    <text x="675" y="650" text-anchor="middle" font-size="11" fill="#444" font-family="Consolas, monospace">ghcr.io/maliswiss/weatherwise-ci-cd-mit-github-actions</text>
+    <text x="675" y="672" text-anchor="middle" font-size="10.5" fill="#2E7D32" font-weight="bold">:latest  ·  :sha-&lt;commit-hash&gt;</text>
+  </g>
+
+  <!-- Legende -->
+  <g transform="translate(60, 600)">
+    <text x="0" y="0" font-size="11" font-weight="bold" fill="#1F3864">Legende</text>
+    <rect x="0" y="10" width="14" height="14" fill="#E8F0FE" stroke="#1565C0"/>
+    <text x="20" y="22" font-size="10" fill="#333">Lint-Stage</text>
+    <rect x="0" y="30" width="14" height="14" fill="#E8F5E9" stroke="#2E7D32"/>
+    <text x="20" y="42" font-size="10" fill="#333">Test-Stage</text>
+    <rect x="0" y="50" width="14" height="14" fill="#FFF8E1" stroke="#C19A2E"/>
+    <text x="20" y="62" font-size="10" fill="#333">Build &amp; Push</text>
+    <line x1="0" y1="78" x2="14" y2="78" stroke="#C19A2E" stroke-width="1.5" stroke-dasharray="4,3"/>
+    <text x="20" y="82" font-size="10" fill="#333">Conditional Gate</text>
+  </g>
+</svg>

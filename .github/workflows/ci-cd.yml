@@ -1,0 +1,143 @@
+# ============================================================
+# CI/CD-Pipeline für WeatherWise (Frontend)
+# Mehmet Ali Gür · HF Informatik · GIBB Bern
+#
+# Trigger:  push auf main, pull_request, manuelle Ausführung
+# Stages:   Lint  →  Test (Matrix Node 20/22)  →  Build & Push
+# Registry: ghcr.io (GitHub Container Registry)
+# Tags:     latest  +  ${{ github.sha }}  (zwei Tags pro Image)
+# ============================================================
+
+name: CI/CD · Build, Test & Push WeatherWise Frontend
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:   # manueller Trigger über die Actions-UI
+
+# Concurrency: alte Runs auf demselben Branch werden abgebrochen,
+# sobald ein neuer Push kommt → spart Minuten und vermeidet Race Conditions.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}    # maliswiss/WeatherWise-CI-CD-mit-GitHub-Actions
+
+jobs:
+
+  # ----------------------------------------------------------
+  # Stage 1 · LINT  (statische Code-Analyse)
+  # ----------------------------------------------------------
+  lint:
+    name: 🧹 Lint
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js 22 einrichten (mit npm-Cache)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: ESLint ausführen
+        run: npm run lint
+
+  # ----------------------------------------------------------
+  # Stage 2 · TEST  (Matrix: Node 20 + 22 parallel)
+  # ----------------------------------------------------------
+  test:
+    name: 🧪 Test (Node ${{ matrix.node }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false        # ein gescheiterter Node bricht den anderen nicht ab
+      matrix:
+        node: ['20', '22']
+    defaults:
+      run:
+        working-directory: ./frontend
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Node.js ${{ matrix.node }} einrichten (mit npm-Cache)
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Abhängigkeiten installieren
+        run: npm ci
+
+      - name: Unit-Tests (Vitest) ausführen
+        run: npm test
+
+  # ----------------------------------------------------------
+  # Stage 3 · BUILD & PUSH
+  # läuft NUR, wenn Lint UND Test erfolgreich sind und
+  # NUR auf push (nicht auf pull_request)
+  # ----------------------------------------------------------
+  build-and-push:
+    name: 🐳 Build & Push to GHCR
+    runs-on: ubuntu-latest
+    needs: [ lint, test ]
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    # Berechtigungen für GHCR-Push mit GITHUB_TOKEN
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Repository auschecken
+        uses: actions/checkout@v4
+
+      - name: Docker Buildx einrichten
+        uses: docker/setup-buildx-action@v3
+
+      - name: An GHCR anmelden
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Metadaten & Tags vorbereiten
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest,enable={{is_default_branch}}
+            type=sha,format=long
+            type=ref,event=branch
+
+      - name: Image bauen und pushen
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          file: ./frontend/Dockerfile
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          # Docker-Layer-Caching über GitHub Actions Cache → spürbar schnellere Folge-Builds
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Image-Digest ausgeben
+        run: |
+          echo "✅ Image gepusht:"
+          echo "${{ steps.meta.outputs.tags }}"
