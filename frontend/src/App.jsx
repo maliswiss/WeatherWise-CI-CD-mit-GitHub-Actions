@@ -7,7 +7,7 @@ export default function App() {
 
   return (
     <main style={{ fontFamily: 'system-ui, sans-serif', padding: '2rem', maxWidth: '500px' }}>
-      <h1>WeatherWise-WEATHER 🌤️</h1>
+      <h1>WeatherWise-DEMO 🌤️</h1>
       <p>CI/CD-Demo · Container-Image aus GHCR ausgeliefert.</p>
 
       <label>
